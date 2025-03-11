@@ -5,9 +5,6 @@ import json
 
 app = create_app()
 
-# Assicuriamoci che il database venga inizializzato
-with app.app_context():
-    db.create_all()
 
 # Rotte API CRUD
 
