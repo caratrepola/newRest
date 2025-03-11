@@ -8,11 +8,6 @@ import json
 # Crea l'app utilizzando la funzione create_app dal tuo database.py
 app = create_app()
 
-# Non serve configurare nuovamente il database perché è già configurato in create_app()
-
-# Creazione del database all'avvio
-with app.app_context():
-    db.create_all()
 
 # Rotta per ottenere tutti gli eventi
 @app.route('/events', methods=['GET'])
