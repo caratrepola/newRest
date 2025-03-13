@@ -1,11 +1,11 @@
 import os
 from flask import Flask, request, jsonify, Response
-from models import Event  # Importa solo il modello Event
-from database import create_app, db  # Importa create_app e db dal tuo file database.py
+from models import Registrazione, Event
+from database import create_app, db
 from datetime import datetime
 import json
 
-# Crea l'app utilizzando la funzione create_app dal tuo database.py
+
 app = create_app()
 
 
@@ -25,6 +25,7 @@ def get_event(event_id):
         event_json = json.dumps(event.to_dict(), ensure_ascii=False, indent=4)
         return Response(event_json, content_type='application/json; charset=utf-8'), 200
     return jsonify({'error': 'Evento non trovato'}), 404
+
 
 # Rotta per creare un nuovo evento
 @app.route('/events', methods=['POST'])
@@ -50,6 +51,7 @@ def create_event():
     db.session.commit()
 
     return jsonify({'message': 'Evento creato con successo!', 'data': new_event.to_dict()}), 201
+
 
 # Rotta per modificare un evento esistente
 @app.route('/events/<int:event_id>', methods=['PUT'])
@@ -78,14 +80,22 @@ def update_event(event_id):
 # Rotta per eliminare un evento
 @app.route('/events/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
-    event = Event.query.get(event_id)
-    if not event:
-        return jsonify({'error': 'Evento non trovato'}), 404
+    try:
+        event = Event.query.get(event_id)
+        if not event:
+            return jsonify({'error': 'Evento non trovato'}), 404
 
-    db.session.delete(event)
-    db.session.commit()
+        # Prima di eliminare l'evento, rimuoviamo tutte le registrazioni collegate
+        Registrazione.query.filter_by(event_id=event_id).delete()
 
-    return jsonify({'message': 'Evento eliminato con successo'}), 200
+        db.session.delete(event)
+        db.session.commit()
+
+        return jsonify({'message': 'Evento eliminato con successo'}), 200
+
+    except Exception as e:
+        db.session.rollback()  # Annulla eventuali modifiche al database in caso di errore
+        return jsonify({'error': f'Errore del server: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
