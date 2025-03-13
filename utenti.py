@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Response
 from database import create_app, db
-from models import User
+from models import Registrazione, User
 import json
 
 app = create_app()
@@ -70,17 +70,24 @@ def update_user(user_id):
 
 
 # 5. Elimina un utente
-@app.route('/users/<int:user_id>', methods=['DELETE'])
+@app.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "Utente non trovato"}), 404
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "Utente non trovato"}), 404
 
-    db.session.delete(user)
-    db.session.commit()
+        # Prima di eliminare l'utente, rimuoviamo tutte le sue registrazioni agli eventi
+        Registrazione.query.filter_by(user_id=user_id).delete()
 
-    # Restituzione della risposta di eliminazione con successo
-    return jsonify({"message": "Utente eliminato con successo"}), 200
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({"message": "Utente eliminato con successo"}), 200
+
+    except Exception as e:
+        db.session.rollback()  # Annulla eventuali modifiche al database in caso di errore
+        return jsonify({"error": f"Errore del server: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
