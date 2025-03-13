@@ -1,6 +1,6 @@
 from datetime import datetime
 from database import create_app, db
-from models import User, Event
+from models import User, Event, Registrazione
 
 
 def seed_database():
@@ -46,6 +46,23 @@ def seed_database():
         db.session.add_all(events)
 
         # Conferma le modifiche
+        db.session.commit()
+
+        # Recupera gli ID generati
+        users = User.query.all()
+        events = Event.query.all()
+
+        # Crea registrazioni di esempio
+        registrations = [
+            Registrazione(user_id=users[0].id, event_id=events[0].id),  # Mario Rossi → Workshop Python
+            Registrazione(user_id=users[1].id, event_id=events[1].id),  # Luigi Verdi → Conferenza Web
+            Registrazione(user_id=users[2].id, event_id=events[0].id),  # Anna Bianchi → Workshop Python
+            Registrazione(user_id=users[3].id, event_id=events[2].id),  # Giulia Neri → Meetup Database
+            Registrazione(user_id=users[0].id, event_id=events[2].id),  # Mario Rossi → Meetup Database
+        ]
+
+        # Aggiungi registrazioni al database
+        db.session.add_all(registrations)
         db.session.commit()
 
         print("Database popolato con successo!")
