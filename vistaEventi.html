@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST API Tester - Gestione Eventi</title>
+    <style>
+        body {
+            font-family: monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        h1, h2, h3 {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .api-panel {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-panel {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            overflow: auto;
+            max-height: 400px;
+        }
+
+        .request-details {
+            background-color: #e9e9e9;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .response-details {
+            background-color: #f1f1f1;
+            border-left: 4px solid #4CAF50;
+            padding: 10px;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .endpoint {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .method {
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+            width: 60px;
+            text-align: center;
+        }
+
+        .get { background-color: #2196F3; }
+        .post { background-color: #4CAF50; }
+        .put { background-color: #ff9800; }
+        .delete { background-color: #f44336; }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .params-container {
+            margin-top: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .status-2xx { background-color: #dff0d8; color: #3c763d; }
+        .status-4xx { background-color: #fcf8e3; color: #8a6d3b; }
+        .status-5xx { background-color: #f2dede; color: #a94442; }
+
+        .time-taken {
+            font-style: italic;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #ddd;
+            border: none;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background-color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>REST API Tester - Gestione Eventi</h1>
+        <p>Questa pagina permette di testare le API REST per la gestione degli eventi</p>
+
+        <!-- GET Events List -->
+        <div class="api-panel">
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <span>/events</span>
+            </div>
+            <p>Recupera la lista di tutti gli eventi</p>
+            <button id="testGetEvents">Esegui Test</button>
+            <div id="getEventsResult" class="result-panel" style="display: none;"></div>
+        </div>
+
+        <!-- GET Single Event -->
+        <div class="api-panel">
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <span>/events/{id}</span>
+            </div>
+            <p>Recupera i dettagli di un evento specifico</p>
+            <div class="params-container">
+                <input type="number" id="getEventId" placeholder="ID Evento" min="1">
+            </div>
+            <button id="testGetEvent">Esegui Test</button>
+            <div id="getEventResult" class="result-panel" style="display: none;"></div>
+        </div>
+
+        <!-- POST Create Event -->
+        <div class="api-panel">
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <span>/events</span>
+            </div>
+            <p>Crea un nuovo evento</p>
+            <div class="params-container">
+                <textarea id="createEventPayload">{
+  "titolo": "Nuovo Evento",
+  "descrizione": "Descrizione del nuovo evento",
+  "data": "2025-05-15T18:00:00",
+  "luogo": "Milano"
+}</textarea>
+            </div>
+            <button id="testCreateEvent">Esegui Test</button>
+            <div id="createEventResult" class="result-panel" style="display: none;"></div>
+        </div>
+
+        <!-- PUT Update Event -->
+        <div class="api-panel">
+            <div class="endpoint">
+                <span class="method put">PUT</span>
+                <span>/events/{id}</span>
+            </div>
+            <p>Aggiorna un evento esistente</p>
+            <div class="params-container">
+                <input type="number" id="updateEventId" placeholder="ID Evento" min="1">
+                <textarea id="updateEventPayload">{
+  "titolo": "Evento Aggiornato",
+  "descrizione": "Descrizione aggiornata",
+  "data": "2025-06-20T19:30:00",
+  "luogo": "Roma"
+}</textarea>
+            </div>
+            <button id="testUpdateEvent">Esegui Test</button>
+            <div id="updateEventResult" class="result-panel" style="display: none;"></div>
+        </div>
+
+        <!-- DELETE Event -->
+        <div class="api-panel">
+            <div class="endpoint">
+                <span class="method delete">DELETE</span>
+                <span>/events/{id}</span>
+            </div>
+            <p>Elimina un evento</p>
+            <div class="params-container">
+                <input type="number" id="deleteEventId" placeholder="ID Evento" min="1">
+            </div>
+            <button id="testDeleteEvent">Esegui Test</button>
+            <div id="deleteEventResult" class="result-panel" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Funzione per formattare JSON
+        function formatJSON(json) {
+            try {
+                if (typeof json === 'string') {
+                    json = JSON.parse(json);
+                }
+                return JSON.stringify(json, null, 2);
+            } catch (e) {
+                return json;
+            }
+        }
+
+        // Funzione per determinare la classe di status HTTP
+        function getStatusClass(status) {
+            if (status >= 200 && status < 300) return 'status-2xx';
+            if (status >= 400 && status < 500) return 'status-4xx';
+            if (status >= 500) return 'status-5xx';
+            return '';
+        }
+
+        // Funzione per eseguire richieste API e mostrare i risultati
+        async function executeRequest(method, url, body = null, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            resultElement.style.display = 'block';
+
+            // Costruisci i dettagli della richiesta
+            const headers = {
+                'Accept': 'application/json'
+            };
+
+            if (body) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const requestDetails = {
+                method: method,
+                headers: headers
+            };
+
+            if (body) {
+                requestDetails.body = body;
+            }
+
+            // HTML per i dettagli della richiesta
+            resultElement.innerHTML = `
+                <div class="request-details">
+                    <h3>Richiesta</h3>
+                    <pre>URL: ${url}</pre>
+                    <pre>Metodo: ${method}</pre>
+                    ${headers ? `<pre>Headers: ${formatJSON(headers)}</pre>` : ''}
+                    ${body ? `<pre>Body: ${formatJSON(body)}</pre>` : ''}
+                </div>
+                <div class="response-details">
+                    <h3>Risposta</h3>
+                    <p>In attesa della risposta...</p>
+                </div>
+            `;
+
+            // Esegui la richiesta e misura il tempo
+            const startTime = new Date().getTime();
+
+            try {
+                const response = await fetch(url, requestDetails);
+                const endTime = new Date().getTime();
+                const timeTaken = endTime - startTime;
+
+                // Ottieni il corpo della risposta
+                let responseBody;
+                try {
+                    responseBody = await response.json();
+                } catch (e) {
+                    responseBody = await response.text();
+                }
+
+                // Aggiorna i dettagli della risposta
+                const responseElement = resultElement.querySelector('.response-details');
+                responseElement.innerHTML = `
+                    <h3>Risposta</h3>
+                    <p>
+                        Status: <span class="status ${getStatusClass(response.status)}">${response.status} ${response.statusText}</span>
+                        <span class="time-taken">Tempo: ${timeTaken}ms</span>
+                    </p>
+                    <pre>Headers: ${formatJSON(Object.fromEntries(response.headers))}</pre>
+                    <pre>Body: ${formatJSON(responseBody)}</pre>
+                `;
+            } catch (error) {
+                const endTime = new Date().getTime();
+                const timeTaken = endTime - startTime;
+
+                // Aggiorna con l'errore
+                const responseElement = resultElement.querySelector('.response-details');
+                responseElement.innerHTML = `
+                    <h3>Errore</h3>
+                    <p>
+                        <span class="status status-5xx">Errore</span>
+                        <span class="time-taken">Tempo: ${timeTaken}ms</span>
+                    </p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        // Test per ottenere tutti gli eventi
+        document.getElementById('testGetEvents').addEventListener('click', () => {
+            executeRequest('GET', '/events', null, 'getEventsResult');
+        });
+
+        // Test per ottenere un evento specifico
+        document.getElementById('testGetEvent').addEventListener('click', () => {
+            const eventId = document.getElementById('getEventId').value;
+            if (!eventId) {
+                alert('Inserisci un ID evento valido');
+                return;
+            }
+            executeRequest('GET', `/events/${eventId}`, null, 'getEventResult');
+        });
+
+        // Test per creare un nuovo evento
+        document.getElementById('testCreateEvent').addEventListener('click', () => {
+            const payload = document.getElementById('createEventPayload').value;
+            try {
+                JSON.parse(payload); // Verifica che sia JSON valido
+                executeRequest('POST', '/events', payload, 'createEventResult');
+            } catch (e) {
+                alert('JSON non valido: ' + e.message);
+            }
+        });
+
+        // Test per aggiornare un evento
+        document.getElementById('testUpdateEvent').addEventListener('click', () => {
+            const eventId = document.getElementById('updateEventId').value;
+            const payload = document.getElementById('updateEventPayload').value;
+
+            if (!eventId) {
+                alert('Inserisci un ID evento valido');
+                return;
+            }
+
+            try {
+                JSON.parse(payload); // Verifica che sia JSON valido
+                executeRequest('PUT', `/events/${eventId}`, payload, 'updateEventResult');
+            } catch (e) {
+                alert('JSON non valido: ' + e.message);
+            }
+        });
+
+        // Test per eliminare un evento
+        document.getElementById('testDeleteEvent').addEventListener('click', () => {
+            const eventId = document.getElementById('deleteEventId').value;
+            if (!eventId) {
+                alert('Inserisci un ID evento valido');
+                return;
+            }
+            executeRequest('DELETE', `/events/${eventId}`, null, 'deleteEventResult');
+        });
+    </script>
+</body>
+</html>
