@@ -1,7 +1,9 @@
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, render_template_string
 from database import create_app, db
 from models import Registrazione, User
 import json
+
+#per visualizzare la pagina html, avvii il server e url http://127.0.0.1:5000/vistaUtenti
 
 app = create_app()
 
@@ -39,6 +41,11 @@ def create_user():
     if 'name' not in data or 'email' not in data:
         return jsonify({"error": "Nome e email sono richiesti"}), 400
 
+    # 🔍 Controllo se l'email esiste già
+    existing_user = User.query.filter_by(email=data['email']).first()
+    if existing_user:
+        return jsonify({"message": "Utente già esistente con questa email", "data": existing_user.to_dict()}), 200
+
     # Creazione di un nuovo utente
     new_user = User(name=data['name'], email=data['email'])
     db.session.add(new_user)
@@ -75,7 +82,7 @@ def delete_user(user_id):
     try:
         user = User.query.get(user_id)
         if not user:
-            return jsonify({"error": "Utente non trovato"}), 404
+            return jsonify({"message": "Utente già eliminato o non esistente"}), 200
 
         # Prima di eliminare l'utente, rimuoviamo tutte le sue registrazioni agli eventi
         Registrazione.query.filter_by(user_id=user_id).delete()
@@ -88,6 +95,12 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()  # Annulla eventuali modifiche al database in caso di errore
         return jsonify({"error": f"Errore del server: {str(e)}"}), 500
+
+# rotta pagina html
+@app.route('/vistaUtenti')
+def vista_utenti():
+    return render_template_string(open("vistaUtenti.html", encoding="utf-8").read())
+
 
 
 if __name__ == '__main__':
