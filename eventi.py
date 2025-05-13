@@ -1,11 +1,11 @@
 import os
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response,  render_template_string
 from models import Registrazione, Event
 from database import create_app, db
 from datetime import datetime
 import json
 
-
+#per visualizzare la pagina html, avvii il server e url http://127.0.0.1:5000/vistaEventi
 app = create_app()
 
 
@@ -39,6 +39,11 @@ def create_event():
         event_data = datetime.fromisoformat(data['data'])
     except ValueError:
         return jsonify({'error': 'Formato data non valido'}), 400
+
+    # 🔍 Controllo evento duplicato
+    existing_event = Event.query.filter_by(titolo=data['titolo'], data=event_data, luogo=data['luogo']).first()
+    if existing_event:
+        return jsonify({"message": "Evento già esistente", "data": existing_event.to_dict()}), 200
 
     new_event = Event(
         titolo=data['titolo'],
@@ -83,7 +88,7 @@ def delete_event(event_id):
     try:
         event = Event.query.get(event_id)
         if not event:
-            return jsonify({'error': 'Evento non trovato'}), 404
+            return jsonify({"message": "Evento già eliminato o non esistente"}), 200
 
         # Prima di eliminare l'evento, rimuoviamo tutte le registrazioni collegate
         Registrazione.query.filter_by(event_id=event_id).delete()
@@ -96,6 +101,11 @@ def delete_event(event_id):
     except Exception as e:
         db.session.rollback()  # Annulla eventuali modifiche al database in caso di errore
         return jsonify({'error': f'Errore del server: {str(e)}'}), 500
+
+# rotta pagina html
+@app.route('/vistaEventi')
+def vista_eventi():
+    return render_template_string(open("vistaEventi.html", encoding="utf-8").read())
 
 if __name__ == '__main__':
     app.run(debug=True)
