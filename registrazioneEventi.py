@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, render_template_string
 import json
 from database import create_app, db
 from models import Registrazione, User, Event
+
+#per visualizzare la pagina html, avvii il server e url http://127.0.0.1:5000/vistaRegistrazioneEventi
 
 app = create_app()
 
@@ -37,19 +39,28 @@ def register_event():
 
     # Controlla che i dati siano presenti
     if not data or "user_id" not in data or "event_id" not in data:
-        return jsonify({"error": "Dati mancanti"}), 400
+        return jsonify({"error": "Dati mancanti"}), 200
 
     # Verifica che l'utente e l'evento esistano
     user = User.query.get(data["user_id"])
     event = Event.query.get(data["event_id"])
 
-    if not user or not event:
-        return jsonify({"error": "Utente o evento non trovato"}), 404
+   # if not user or not event:
+    # return jsonify({"error": "Utente o evento non trovato"}), 404
+
+    missing = []
+    if not user:
+        missing.append("l'utente")
+    if not event:
+        missing.append("l'evento")
+
+    if missing:
+        return jsonify({"message": f"Non esiste {' e '.join(missing)}"}), 200
 
     # Controlla se l'utente è già registrato all'evento
     existing_registration = Registrazione.query.filter_by(user_id=user.id, event_id=event.id).first()
     if existing_registration:
-        return jsonify({"error": "L'utente è già registrato a questo evento"}), 400
+        return jsonify({"error": "L'utente è già registrato a questo evento"}), 200
 
     # Registra l'utente all'evento
     new_registration = Registrazione(user_id=user.id, event_id=event.id)
@@ -65,12 +76,20 @@ def cancel_registration(user_id, event_id):
     registration = Registrazione.query.filter_by(user_id=user_id, event_id=event_id).first()
 
     if not registration:
-        return jsonify({"error": "Registrazione non trovata"}), 404
+        return jsonify({"message": "Registrazione già annullata o inesistente"}), 200
+
 
     db.session.delete(registration)
     db.session.commit()
 
     return jsonify({"message": "Registrazione annullata con successo"}), 200
+
+
+
+# rotta pagina html
+@app.route('/vistaRegistrazioneEventi')
+def vista_registrazione_eventi():
+    return render_template_string(open("vistaRegistrazioneEventi.html", encoding="utf-8").read())
 
 
 if __name__ == "__main__":
